@@ -1,0 +1,29 @@
+{
+  "name": "web2FA - Browser Authenticator",
+  "description": "Easily generate two factor authentication - 2FA - or one-time password - OTP - codes in your browser with web2FA Authenticator.",
+  "version": "1.5.2.1",
+  "manifest_version": 3,
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage"],
+  "icons":{
+    "16":"img/icon_16.png",
+    "32":"img/icon_32.png",
+    "48":"img/icon_48.png",
+    "128":"img/icon_128.png"
+  },
+  "action":{
+    "default_popup": "index.html",
+    "default_title": "web2FA"
+  },
+  "host_permissions":["<all_urls>"],
+  "content_scripts": [
+    {
+      "js":["scripts/jsOTP.min.js","scripts/qrcode.js","scripts/content_script.js"],
+      "css":["scripts/injected_css.css"],
+      "matches":["<all_urls>"],
+      "run_at":"document_end"
+    }
+  ]
+}

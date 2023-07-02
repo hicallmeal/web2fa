@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+  <head>
+    <meta charset="utf-8">
+    <title>TOTP Gen</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+
+  <body>
+    <div class="top_bar rim">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" height="20" width="20" class="quickMenu">
+        <path d="M10 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM4 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM16 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z" fill="#030708"/>
+      </svg>
+      <div class="quickMenuOverlay overlay anim-fade-in">
+        <div class="overlayBox">
+          <span class="closeOverlay">&times;</span>
+          <div class="qm_tabs">
+            <span class="tab_button activeTab">Manual</span>
+            <span class="tab_button">Import</span>
+            <span class="tab_button">Backup</span>
+          </div>
+
+          <div class="qm_contentBox">
+
+            <div class="tab_content" id="qm_manual" style="display:block;">
+              <div class="m_cascade">
+                <div class="mflex mfirst">
+                  <div class="mfield">
+                    <div class="mfield_issuer mInput">
+                      <label for="issuer">Enter Issuer</label>
+                      <input type="text" name="m_issuer" placeholder="E.g. Microsoft">
+                    </div>
+                    <div class="mfield_status anim-fade-in">
+                    </div>
+                    <div class="mfield_siteEntry mInput anim-fade-in slide_down_anim">
+                      <label for="m_site">Enter issuer site</label>
+                      <input type="url" name="m_site">
+                      <!-- <svg> Info denoting specificity (try to find the auth path/subdomain)</svg> -->
+                    </div>
+                  </div>
+                </div>
+                <div class="mflex msecond">
+                  <div class="mfield">
+                    <div class="mfield_user mInput">
+                      <label for="issuer">Enter User</label>
+                      <input type="text" name="m_user" required>
+                    </div>
+                    <div class="mfield_key mInput">
+                      <label for="issuer">Enter Key</label>
+                      <input type="text" name="m_key" required>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button disabled class="mfield_cont" type="submit">Continue
+                <svg class="HoverArrow" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+                  <g fill-rule="evenodd">
+
+                    <path class="HoverArrow__linePath" d="M0 5h7"></path>
+                    <path class="HoverArrow__tipPath" d="M1 1l4 4-4 4"></path>
+
+                  </g>
+                </svg>
+              </button>
+            </div>
+
+            <div class="tab_content" id="qm_import">
+              <!-- <div class="import_selection">
+                <svg class="down" viewBox="0 0 24 24" style="width: 2px;"><path d="M7.41 7.84L12 12.42l4.59-4.58L18 9.25l-6 6-6-6z"></path></svg>
+                <select>
+                  <option value="internal">Web2fa Backup</option>
+                  <option value="external">External Backup</option>
+                </select>
+              </div> -->
+              <div class="file_zone">
+                <span>Select or drop file</span>
+
+                <input id="file_input" type="file" accept="text/plain, .json" hidden>
+              </div>
+              <div class="import_content">
+                <div class="overwrite_check">
+                  <input type="checkbox" id="importOverwrite">
+                  <label for="importOverwrite">Overwrite Data</label>
+                </div>
+                <div class="import_button_box">
+                  <button class="import_button uButton">Import</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab_content" id="qm_backup">
+              <!-- <span class="overlayText"> Choose Backup </span> -->
+              <div class="backup_content">
+                <!-- <div>
+                  <input type="radio" value="sync" id="syncBackup" checked="true" name="backup">
+                  <label for="syncBackup">Sync Data</label>
+                </div>
+                <div>
+                  <input type="radio" value="url" id="urlBackup" name="backup">
+                  <label for="urlBackup">TOTP URLs</label>
+                </div>
+                <div>
+                  <input type="radio" value="all" id="allBackup" name="backup">
+                  <label for="allBackup">All Data</label>
+                </div> -->
+                <div class="backup_option">
+                  <input type="radio" value="all" id="allBackup" name="backup" checked="true">
+                  <label for="allBackup" class="backup_label">
+                    <span class="b_radio"></span>
+                    <span class="b_opt">All Data</span>
+                    <span class="b_desc">All data. web2FA format</span>
+                  </label>
+                </div>
+                <div class="backup_option">
+                  <input type="radio" value="url" id="urlBackup" name="backup">
+                  <label for="urlBackup" class="backup_label">
+                    <span class="b_radio"></span>
+                    <span class="b_opt">2FA Data</span>
+                    <span class="b_desc">2FA keys. Universal format</span>
+                  </label>
+                </div>
+                <!-- <select class="downloadSelect">
+                  <option value="sync">Synced Data</option>
+                  <option value="url">OTP Urls</option>
+                  <option value="all">All Data</option>
+                </select> -->
+              </div>
+                <!-- <div class="back_info_content">
+                  <p id="syncInfo" class=" bInfo bActive" style="display:block;">
+                    Current-only token data. Synced with your profile
+                  </p>
+                  <p id="urlInfo" class=" bInfo">
+                    Standard <a href="https://github.com/google/google-authenticator/wiki/Key-Uri-Format" target="_blank">otpauth://</a> URI scheme. Universally usable
+                  </p>
+                  <p id="allInfo" class=" bInfo">
+                    All web2FA data stored on this computer
+                  </p>
+                </div> -->
+              <div class="download_area">
+                <a class="downloadButton uButton" href="#">Download
+                  <!-- <svg viewBox="0 0 34 34" xmlns="http://www.w3.org/2000/svg" height="14" id="downloadIcon">
+                    <path d="M23.05 22a1 1 0 0 0-1.41 0L17 26.56V3a1 1 0 1 0-2 0v23.53L10.47 22a1 1 0 0 0-1.42 0 1 1 0 0 0 0 1.41l6.37 6.37a.9.9 0 0 0 1.27 0l6.36-6.37a1 1 0 0 0 0-1.41Z" data-name="Layer 2"/>
+                  </svg> -->
+                </a>
+              </div>
+            </div>
+
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <span class="empty_filler">Use the QuickMenu or Scan your first token</span>
+      <div class="token_box"></div>
+      <div class="qr_field">
+          <svg width="41" height="31" id="qrIcon">
+            <g transform="matrix(1.2916667 0 0 1.2916667 5 -0)">
+              <path d="M8 19L6 19C 5.4477153 19 5 18.552284 5 18L5 18L5 16" class="qr2 rimBL"></path>
+              <path d="M19 16L19 18C 19 18.552284 18.552284 19 18 19L18 19L16 19" class="qr2 rimBR"></path>
+              <path d="M16 5L18 5C 18.552284 5 19 5.4477153 19 6L19 6L19 8" class="qr2 rimTR"></path>
+              <path d="M8 5L6 5C 5.4477153 5 5 5.4477153 5 6L5 6L5 8" class="qr2 rimTL"></path>
+              <g class="box2">
+                <path d="M8 8L11 8L11 11L8 11z" class="qr2"></path>
+                <path d="M14 14L16 14L16 16L14 16z" class="qr2"></path>
+                <path d="M8 13L8 16" class="qr2"></path>
+                <path d="M10 13L10 16L12 16L12 13L12 12L13 12L16 12" class="qr2"></path>
+                <path d="M16 10L13 10L13 8L16 8" class="qr2"></path>
+              </g>
+              <path d="M0 0L24 0L24 24L0 24z" class="qr1"></path>
+              </g>
+              <path d="M0 0L24 0L24 24L0 24z" class="qr1"></path>
+            </g>
+          </svg>
+      </div>
+    </div>
+    <div class="chin rim">
+      <!-- <a class="download" download="backup.txt" title="Download Backup">
+        <svg id="downloadIcon" viewbox="0 0 24 24" fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" width="16" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+        </svg>
+      </a>
+      <div class="info" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="15">
+          <g data-name="Layer 2">
+            <path d="M16 12a2 2 0 1 1 2-2 2 2 0 0 1-2 2Zm0-2Z"/>
+            <path d="M16 29a13 13 0 1 1 13-13 13 13 0 0 1-13 13Zm0-24a11 11 0 1 0 11 11A11 11 0 0 0 16 5Z"/>
+            <path d="M16 24a2 2 0 0 1-2-2v-6a2 2 0 0 1 4 0v6a2 2 0 0 1-2 2Zm0-8Z"/>
+          </g>
+          <path style="fill:none" d="M0 0h32v32H0z"/>
+        </svg>
+      </div> -->
+
+    </div>
+  </body>
+
+  <script src="script.js" charset="utf-8"></script>
+
+</html>
