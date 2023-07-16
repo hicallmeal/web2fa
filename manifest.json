@@ -1,5 +1,5 @@
 {
-  "name": "web2FA - Browser Authenticator",
+  "name": "web2FA - Browser Authenticator - dev",
   "description": "Easily generate two factor authentication - 2FA - or one-time password - OTP - codes in your browser with web2FA Authenticator.",
   "version": "1.5.2.1",
   "manifest_version": 3,
@@ -15,7 +15,7 @@
   },
   "action":{
     "default_popup": "index.html",
-    "default_title": "web2FA"
+    "default_title": "web2FA - dev"
   },
   "host_permissions":["<all_urls>"],
   "content_scripts": [
