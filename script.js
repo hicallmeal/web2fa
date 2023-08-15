@@ -164,7 +164,7 @@ function displayToken (key, user, parent, issuer, issuerSettings) {
   let p_cont = document.getElementById(uid)
 
   let time = new Date;
-  let second = time.getSeconds()
+  let second = time.getSeconds() // + Math.round(time.getMilliseconds()/100)/10
   let delay = (second >= 30) ? second -30 : second;
 
   p_cont.querySelector(".countdown").innerHTML = `
@@ -200,7 +200,7 @@ function displayToken (key, user, parent, issuer, issuerSettings) {
   let tokenCountdown = setInterval(() => {
 
     time = new Date;
-    let seconds = time.getSeconds()
+    let seconds = time.getSeconds() // + Math.round(time.getMilliseconds()/10)/100
     let cdown = (seconds >= 30) ? seconds - 30 : seconds;
 
     p_cont.querySelector(".time").innerText = 30 - cdown;
