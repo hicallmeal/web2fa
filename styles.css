@@ -169,7 +169,7 @@ body {
   grid-area: name;
   align-self: end;
   justify-self: start;
-  margin: 0 0 6px 2px; /* temporary */
+  margin: 0 0 3px 2px; /* temporary */
 }
 
 /* Bottom Section - Chin (Visual Only) */
