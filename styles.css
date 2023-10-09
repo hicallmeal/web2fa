@@ -13,6 +13,7 @@ body {
   overflow:hidden;
   height:450px;
   width:300px;
+  user-select: none;
 }
 
 /* var defs */
@@ -23,9 +24,12 @@ body {
   --slightly-darker-grey: #ececec;
 
   /* Testing Only */
-  --va: 1.8;
-  --v2: 1.05;
+  --va: 1.35;
+  --v2: 0.9;
+
+  --code-blue: #076cbd;  /*#0077d7 color: #225fbb;  nice-blue #468ffd*/
 }
+
 
 
 
@@ -73,13 +77,13 @@ body {
 
 #scanner {
   position: fixed;
-  bottom: 51px;
-  right: 23px;
+  bottom: 66px;
+  right: 16px;
   background-color: #1fbd87; /* #30cb1e ? */
-  box-shadow: var(--shadow);
+  box-shadow: 0px 1px 2px 0px rgb(65 69 73 / 30%), 0 1px 3px 1px rgb(65 69 73 / 15%);
   border-radius: 8px;
   cursor: pointer;
-  padding: calc(var(--v2) * 5.5px) calc(var(--v2) * 2px);
+  padding: calc(var(--v2) * 5.5px) calc(var(--v2) * 1.9px);
   display: flex;
   flex-direction: row;
   transition: 0.2s ease-in;
@@ -133,17 +137,17 @@ body {
 /*  */
 
 .tokenField {
-  grid-template-rows: 33px 32px 17px;
-  grid-template-columns: 10px 60px 10px auto 50px;
+  grid-template-rows: 31px 37px 14px;
+  grid-template-columns: 10px 60px 10px 5px auto 50px;
   display: grid;
   height: 82px;
   background-color: #f9f9f9;
-  margin: 13px 0 8px 8px;
+  margin: 8px 0 8px 8px;
   box-shadow: var(--shadow);
   grid-template-areas:
-      ". issuer issuer name ."
-      ". issuer issuer code time"
-      ". issuer issuer . .";
+      ". issuer issuer . name name"
+      ". issuer issuer . code time"
+      ". issuer issuer . . .";
 }
 
 .tokenSecret {
@@ -151,8 +155,10 @@ body {
   font-size: 34px;
   justify-self: start;
   align-self: center;
-  color: #225fbb;
+  color: var(--code-blue);
   margin-bottom: 6px; /* temporary */
+  letter-spacing: 1.1px;
+  /* user-select: text;   no because of the space. so it'll be a (forced) click to copy instead.*/
 }
 
 .tokenIssuer {
@@ -164,12 +170,19 @@ body {
   user-select: none;
 }
 
+.tokenIssuer img { /* temporary */
+  width: inherit
+}
 
 .tokenUser {
   grid-area: name;
   align-self: end;
   justify-self: start;
   margin: 0 0 3px 2px; /* temporary */
+  overflow: hidden;
+  width: 87%;
+  text-overflow: ellipsis;
+  user-select: text;
 }
 
 /* Bottom Section - Chin (Visual Only) */
@@ -179,4 +192,186 @@ body {
   position: relative;
   background-color: var(--slightly-darker-grey);
   box-shadow: var(--shadow);
+}
+
+
+
+/* Temp - Delete */
+
+.tokenField:hover .deleteButton {
+  opacity: 1;
+}
+
+.deleteButton {
+  top: 4px;
+  left: 20px;
+  position: relative;
+  grid-area: 1 / 6 / 2 / 7;
+  opacity: 0;
+  /* transition: 70ms ease-in-out opacity; */
+}
+
+.deleteButton svg {
+  width:16px;
+  fill: #b1b1b1;
+  cursor: pointer;
+}
+
+.deleteButton:hover svg {
+  fill: #838383;
+}
+
+dialog {
+  margin: auto;
+  border: none;
+  padding: 1.8em;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  width: 83%;
+  /* height: 65%; */
+  font-size: 14px;
+
+}
+
+dialog[open] {
+  animation: fade-in 0.2s ease-in-out;
+}
+
+dialog::backdrop {
+  background-color: #00000057;
+}
+
+dialog h3 {
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+dialog p {
+  margin-top: 10px;
+}
+
+dialog ul {
+  padding-inline-start: 15px;
+  margin-top: 13px;
+}
+
+dialog li {
+  margin-top:7px;
+}
+
+dialog div:last-child {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
+
+dialog button {
+  border: none;
+  background-color: transparent;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  color: var(--code-blue);
+}
+
+#delY {
+  color: #e63131; /*  brighter - #e63131 */
+}
+
+/* Temp - Testing CountDown */
+
+.countdown {
+  grid-area: time;
+}
+
+.base-timer {
+  position: relative;
+  height: 30px;
+  width: 30px;
+}
+
+/* Removes SVG styling that would hide the time label */
+.base-timer__circle {
+  fill: none;
+  stroke: none;
+}
+
+/* The SVG path that displays the timer's progress   */
+.base-timer__path-elapsed {
+  stroke-width: 5px;
+  stroke: #b1b1b1;  
+}
+
+.base-timer__label {
+  position: absolute;
+  
+  /* Size should match the parent container */
+  width: 30px;
+  height: 30px;
+  
+  /* Keep the label aligned to the top */
+  top: 0;
+  
+  /* Create a flexible box that centers content vertically and horizontally */
+  display: flex;
+  font-size: 13px;
+  justify-content: center;
+  align-items: center;
+  right: 0.3px;
+  color: var(--code-blue)
+}
+
+.base-timer__path-remaining {
+  /* Just as thick as the original ring */
+  stroke-width: 5px;
+
+  /* Rounds the line endings to create a seamless circle */
+  /* stroke-linecap: round; */
+
+  /* Makes sure the animation starts at the top of the circle */
+  transform: rotate(90deg);
+  transform-origin: center;
+
+  /* One second aligns with the speed of the countdown timer */
+  transition: 1s linear all;
+
+  /* Allows the ring to change color when the color value updates */
+  stroke: currentColor;
+  color: var(--code-blue);
+
+  /* stroke-dasharray: 144.51; */
+/* 
+  animation-name: timer;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+  animation-duration: 30s;   */
+
+}
+/* 
+@keyframes timer {
+    100% {
+        stroke-dashoffset: -144.51
+    }
+} */
+
+.base-timer__svg {
+  /* Flips the svg and makes the animation to move left-to-right */
+  /* transform: scaleX(-1); */
+}
+
+
+
+
+
+@keyframes fade-in{
+  0%{
+    opacity: 0;
+  }
+  100%{
+    opacity: 1;
+  }
 }

@@ -1,0 +1,43 @@
+guid 1 {}
+
+ms {}
+
+google {}
+
+guid 2
+
+
+Internal: {
+	active: [ issuer1 ],
+	tokens: {
+		issuer1: {
+			accounts: {
+				guid_1: {
+					secret: "text",
+					username: "text"
+					}
+				guid_2: {
+					secret: "text",
+					username: "text"
+					}
+				}
+			}
+		}
+}
+
+
+Internal: {
+	active: [ issuer1 ],
+	tokens: {
+		issuer1: {
+			accounts: {
+				"username": {
+					secret: "text"
+					},
+				"username": {
+					secret: "text"
+					}
+				}
+			}
+		}
+}
