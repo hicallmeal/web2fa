@@ -1,4 +1,4 @@
-async function getQR() {
+async function getQR() { // have not yet addressed
   return new Promise((resolve, reject) => {
     let overlay = document.createElement("div");
     overlay.id = "__otpOverlayDiv";
@@ -80,100 +80,76 @@ async function getQR() {
 function storeData(user, secret, issuer, settings) {
 
   chrome.storage.sync.get(null, (sync) => {
+    
+    let userGUID = crypto.randomUUID()
+
     if (sync.internal.tokens[issuer]) {
-      sync.internal.tokens[issuer]["accounts"][user] =
+      sync.internal.tokens[issuer][userGUID] = 
       {
-        "secret":secret,
+        "username": user,
+        "secret":secret
       };
     }
+
     else {
-      sync.internal.tokens[issuer] =
-      {
-        "accounts":
-          {
-          [user]:
-              {
-                "secret":secret
-              }
-          }
+      sync.internal.tokens[issuer] = {
+        [userGUID]:
+            {
+              "username": user,
+              "secret":secret
+            }
       };
     }
-    debugger
+
     if (!(sync[issuer])) {
-      sync.internal.active.push(issuer);
       sync[issuer] = settings;
-      // chrome.storage.sync.set({[issuer]: settings});
     }
     chrome.storage.sync.set(sync);
   })
 }
 
 function getFavicon(response, callback) {
-  const imageUrl = response; //https://thewebdev.info/2021/09/25/how-to-use-the-fetch-api-to-get-an-image-from-a-url/
+  const imageUrl = response; 
   (async () => {
     let response;
     try {
       response = await fetch(imageUrl)
     }
     catch(e) {
-      getImageDataURL(imageUrl, (faviconDataURL) => {
-        try {
-          let data = faviconDataURL.toDataURL()
-          callback(data);
-        }
-        catch (e) {
-          chrome.runtime.sendMessage({type:"favicon", url:imageUrl}, function (te){
-            callback(te.favicon);
-          });
-        }
-      })
+      chrome.runtime.sendMessage({type:"favicon", url:imageUrl}, function (te){
+        callback(te.favicon);
+      });
     }
     const imageBlob = await response.blob()
     const reader = new FileReader();
     reader.readAsDataURL(imageBlob);
     reader.onloadend = () => {
-      const base64data = reader.result;
-      // if (!(Math.round((base64data.split(",")[1].length)*3/4) > 7500)) {
-        callback(base64data);
-      // }
-      // else {
-        // getImageDataURL(base64data, (faviconDataURL) => {callback(faviconDataURL.toDataURL())});
-      // }
+      const imageData = reader.result;
+      if (!(Math.round((imageData.split(",")[1].length)*3/4) > 7900)) { // need to check whether (png vs webp) b64 encodes it differently
+        callback(imageData);                                            // in reference to the '* 3/4'
+      }
+      else {
+        getImageDataURL(imageData, (updatedImageData) => {callback(updatedImageData)});
+      }
     }
   })()
-
-
 }
 
 function getImageDataURL(source, callback){
   let image = new Image();
-  image.src = source;
+  let cans = document.createElement('canvas');
+  
   image.onload = function() {
-    var cans = document.createElement('canvas');
     cans.width = image.naturalWidth;
     cans.height = image.naturalHeight;
     cans.getContext('2d').drawImage(image, 0,0);
-    callback(cans);
+    let q = 1
+    while (cans.toDataURL("image/webp", q).length > 7900) { // 7900 is semi-arbitrary. icon data + other < 8KB quota
+      q -= 0.1;
+    }
+    callback(cans.toDataURL("image/webp", q));
   }
-}
-
-function reduceImageSize(source, callback, size=128){
-  let image = new Image();
   image.src = source;
-  image.onload = function() {
-    var cans = document.createElement('canvas');
-    cans.width = size;
-    cans.height = size;
-    context = cans.getContext('2d')
-    context.scale(size/image.width,  size/image.height);
-    context.drawImage(image, 0,0);
-    if (Math.round((cans.toDataURL().split(",")[1].length)) > 7500) {
-      reduceImageSize(cans.toDataURL(), (cans)=> {callback(cans)}, size=96)
-    }
-    else {
-      callback(cans);
-    }
-  }
 }
 
 chrome.runtime.onMessage.addListener(
@@ -183,20 +159,11 @@ chrome.runtime.onMessage.addListener(
 
               let t_fav = window.location.href;
 
-              if (!(t_fav.includes(".svg"))) {
-                  getImageDataURL(t_fav, (faviconDataURL) => {
-                    if (!(Math.round((faviconDataURL.toDataURL().split(",")[1].length)*3/4) > 7500)) {
-                      sendResponse({favi:faviconDataURL.toDataURL()});
-                      window.close();
-                      return true
-                    }
-                    else {
-                      reduceImageSize(faviconDataURL.toDataURL(), (faviconDataURL) => {
-                        sendResponse({favi:faviconDataURL.toDataURL()});
-                        window.close();
-                        return true
-                      })
-                    }
+              if (!(t_fav.includes(".svg"))) { // .svg pages don't have a DOM (?) so handled differently.
+                  getImageDataURL(t_fav, (imageData) => {
+                    sendResponse({favi:imageData});
+                    window.close();
+                    return true
                   });
               }
               else {
@@ -208,27 +175,34 @@ chrome.runtime.onMessage.addListener(
               }
 
             case "getQR":
+              var totp = new jsOTP.totp();
               getQR().then((value)=>{
 
                 chrome.runtime.sendMessage({type:"qr"}, (response)=> {
+                  
+                  let t = value.box;
+                  let canvas = document.createElement("canvas");
+                  canvas.width = t.width;
+                  canvas.height = t.height;
+                  const ctx = canvas.getContext("2d");
+                  var scale = window.devicePixelRatio;
+
                   let img = new Image();
-                  img.src= response.tabC;
+                  img.src= response.tabC; //should this go after image.onload?
 
                   img.onload = function () {
-                    let t = value.box;
-                    let canvas = document.createElement("canvas");
-                    canvas.width = t.width;
-                    canvas.height = t.height;
-                    const ctx = canvas.getContext("2d");
-                    var scale = window.devicePixelRatio;
+                    
                     ctx.drawImage(img, t.x * scale, t.y * scale, t.width * scale, t.height * scale, 0, 0, t.width, t.height);
+                    // console.log( canvas.toDataURL("image/webp", 0.5).length) // webp for less data? (but quality is fine)
                     let url = canvas.toDataURL();
-
+                    
                     let im = new Image()
                     im.src = url
-                    var totp = new jsOTP.totp();
 
-                    function slow(res) {
+                    function parseQR(res) {
+                      
+                      // not addressed: Digits, Type, Counter, non-standard params. 
+
                       if (!(res.startsWith("otp"))) {
                         alert(res)
                         return
@@ -245,49 +219,32 @@ chrome.runtime.onMessage.addListener(
                         user: otpURI.pathname.split("/").at(-1).includes(":") ? otpURI.pathname.split("/").at(-1).split(":")[1]  : otpURI.pathname.split("/").at(-1)
                       });
 
-                      let te = otpObj?.digits;
-                      let issuer = otpObj.issuer ? otpObj.issuer : (otpObj.user.includes("@")) ? otpObj.user.split("@")[1].split(".")[0] : "";
-                      issuer = issuer.toLowerCase() //could save this line by appending it to here ------------------------------------^  just need to be sure all issuers are lowercase
+                      let issuer = otpObj.issuer ? otpObj.issuer : (otpObj.host) ? otpObj.host : ""
+                      issuer = issuer.toLowerCase() 
 
-                      console.log("lowe2")
+                      let keyCode = totp.getOtp(otpObj.secret)
 
-                      alert(`Added ${otpObj.user} | Verification Code: ${totp.getOtp(otpObj.secret)}`)
+                      alert(`Added ${otpObj.user} | Verification Code: ${keyCode.slice(0,3)} ${keyCode.slice(3)}`)
+                      
+                      // Store Data
+
                       chrome.storage.local.get(["external"], (local) => {
-                        console.log("lower")
-                        if (local.external[issuer]) {
+
+                        if (local.external[issuer]) { // check for exisiting stored icon
                           storeData(otpObj.user, otpObj.secret, issuer, local.external[issuer])
                         }
                         else {
-                          debugger
                           getFavicon(response.fav, function(favicon) {
-                            debugger
-                            console.log("here")
                             let issuerSettings = {
-                              "settings":
-                                {
-                                  "host":window.location.hostname.substring(window.location.hostname.lastIndexOf(".", window.location.hostname.lastIndexOf(".") - 1) + 1), //function?
+                              "settings": {
+                                  "favicon": favicon,
+                                  "icon_page": response.fav,
                                   "setup_page" : window.location.href
                                 }
                             }
-                            if (Math.round((favicon.split(",")[1].length)*3/4) > 7500) {
-                              // console.log("reducing")
-                              reduceImageSize(favicon, (e)=> {
-                                issuerSettings.settings["favicon"] = e.toDataURL();
-                                // console.log(Math.round((e.toDataURL().split(",")[1].length)*3/4))
-                                local.external[issuer] = issuerSettings;
-                                chrome.storage.local.set(local);
-                                storeData(otpObj.user, otpObj.secret, issuer, issuerSettings);
-                              });
-                            }
-                            else {
-                              issuerSettings.settings["favicon"] = favicon;
-                              local.external[issuer] = issuerSettings;
-                              chrome.storage.local.set(local);
-                              storeData(otpObj.user, otpObj.secret, issuer, issuerSettings);
-                            }
-
-
-
+                            local.external[issuer] = issuerSettings;
+                            chrome.storage.local.set(local);
+                            storeData(otpObj.user, otpObj.secret, issuer, issuerSettings);
                           })
                         }
                       })
@@ -297,24 +254,24 @@ chrome.runtime.onMessage.addListener(
                     qrcode
                       .scan(url)
                       .then(result => {
-                        slow(result.data);
+                        parseQR(result.data); //try to alert secret, etc asap (for UX)
                       })
                       .catch(error => {
 
-                        alert("Invalid QR code")
-                        console.log(error);
+                        alert("Invalid QR code. Try Again") 
+                        // console.log(error);      // on sucessive fails, suggest manual?
                       });
                   };
                 })
               });
               return true
 
-            case "updateIcon":
+            case "updateIcon": // have not yet addressed
                 chrome.storage.local.get(["external"], (local) => {
                   chrome.runtime.sendMessage({type:"faviconUrl"}, (response)=> {
                     getFavicon(response.fav, function(favicon) {
                         getImageDataURL(favicon, (favicon) => {
-                          if (!(favicon.toDataURL() > 8000)) {
+                          if (!(favicon.toDataURL() > 7900)) {
 
                             const issuerSettings = {
                               "settings":
@@ -323,7 +280,7 @@ chrome.runtime.onMessage.addListener(
                                 "setup_page" : window.location.href,
                                 "favicon" : favicon.toDataURL()
                               }
-                            }
+                        }
                             local.external[message.issuer] = issuerSettings;
                             chrome.storage.local.set(local)
                             chrome.storage.sync.set({[message.issuer]: issuerSettings});

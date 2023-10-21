@@ -178,9 +178,9 @@ body {
   grid-area: name;
   align-self: end;
   justify-self: start;
-  margin: 0 0 3px 2px; /* temporary */
+  margin: 0 0 1px 2px; /* temporary */
   overflow: hidden;
-  width: 87%;
+  width: 67%; /* 87%; */
   text-overflow: ellipsis;
   user-select: text;
 }
@@ -228,7 +228,7 @@ dialog {
   border-radius: 10px;
   box-shadow: var(--shadow);
   width: 83%;
-  /* height: 65%; */
+  height: 69%;
   font-size: 14px;
 
 }
@@ -239,6 +239,7 @@ dialog[open] {
 
 dialog::backdrop {
   background-color: #00000057;
+  animation: fade-in 0.2s ease-in-out;
 }
 
 dialog h3 {
@@ -247,6 +248,12 @@ dialog h3 {
   text-align: center;
   text-overflow: ellipsis;
   overflow: hidden;
+}
+
+#dialogUser {
+  padding-right: 14px;
+  max-width: 74%;
+  display: inline-block;
 }
 
 dialog p {
@@ -374,4 +381,10 @@ dialog button {
   100%{
     opacity: 1;
   }
+}
+
+.imageSmall {
+  width: 17px;
+  display: inline-block;
+  margin-left: 6px;
 }

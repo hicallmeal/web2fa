@@ -26,8 +26,8 @@ chrome.runtime.onMessage.addListener(
      function(message, sender, sendResponse) {
         switch(message.type) {
             case "favicon":
-              chrome.tabs.create({url:message.url, selected:false}).then(function() {
-                chrome.tabs.query({active: true, currentWindow: true}, function(kij) {
+              chrome.tabs.create({url:message.url, selected:false}).then(()=> {
+                chrome.tabs.query({active: true, currentWindow: true}, ()=> {
                   chrome.tabs.onUpdated.addListener(function test(tabId, changeInfo, tab) {
                     if (tab.url.indexOf(message.url) != -1 && changeInfo.status == 'complete') {
                       chrome.tabs.sendMessage(tab.id, {type:"fav_url"}, function(response) {

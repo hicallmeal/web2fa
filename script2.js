@@ -7,10 +7,11 @@ chrome.storage.sync.get(null, function(syncStorage) {
 
         for (let issuer of tokenKeys) {
 
-        for (let account of Object.keys(syncStorage.internal.tokens[issuer]["accounts"])) {
-            displayToken("1234123412341234", "test", "Testrosoft", {settings: {}})
-            // displayToken(syncStorage.internal.tokens[issuer]["accounts"][account]["secret"],account, issuer, syncStorage[issuer]);
-        }
+          for (let account of Object.keys(syncStorage.internal.tokens[issuer])) {
+              // displayToken("1234123412341234", "test", "Testrosoft", {settings: {}})
+              // displayToken(syncStorage.internal.tokens[issuer][account]["secret"], syncStorage.internal.tokens[issuer][account]["username"], issuer, syncStorage[issuer]);
+              displayToken(issuer, account, syncStorage.internal.tokens[issuer][account], syncStorage[issuer])
+          }
         }
     }
     // else {
@@ -19,52 +20,64 @@ chrome.storage.sync.get(null, function(syncStorage) {
 })
 
 document.querySelector("#scanner").addEventListener("click", ()=> {
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-        chrome.tabs.sendMessage(tabs[0].id, {type: "getQR"});
-    });
-     window.close();
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    chrome.tabs.sendMessage(tabs[0].id, {type: "getQR"});
+  });
+    window.close();
 });
 
-let deletionModal = document.createElement("dialog")
-deletionModal.innerHTML = `
-    <h3>Remove ${"test"}?</h3>
-    <div>
-        <p>This is a <strong>permanent</strong> action that <strong>cannot</strong> be undone.</p>
-        <p>Ensure you: 
-    </div>
-    <div>
-        <ul>
-            <li>Back up your codes</li>
-            <li>Turn off 2FA for this account</li>
-            <li>Have an alternative authenticator</li>
-        </ul>
-    </div>
-    <div>
-        <button id="delN">Cancel</button>
-        <button id="delY">Remove</button>
-    </div>
-`
 
-function deleteToken(token) {
+function deleteToken(user, imageData) {
+  return new Promise((resolve) => {
 
-
+    let deletionModal = document.createElement("dialog")
+    deletionModal.innerHTML = `
+      <form>
+        <h3>Remove</h3>
+        <div style="line-height: 1.2; text-align: center;">
+          <img src="${imageData}" class="imageSmall">
+          <h3 id="dialogUser">${user}</h3>
+        </div>
+        <div>
+            <p>This is a <strong>permanent</strong> action that <strong>cannot</strong> be undone.</p>
+            <p>Ensure you: 
+        </div>
+        <div>
+            <ul>
+                <li>Back up your codes</li>
+                <li>Turn off 2FA for this account</li>
+                <li>Have an alternative authenticator</li>
+            </ul>
+        </div>
+        <div>
+            <button id="delN" value="cancel" formmethod="dialog">Cancel</button>
+            <button id="delY" value="remove">Remove</button>
+        </div>
+      </form>
+      `
+      
     document.body.appendChild(deletionModal)
     
     deletionModal.showModal()
 
-    deletionModal.querySelector("#delY") // could be the form closing one - given a refresh will show the changes?
-    deletionModal.querySelector("#delN").addEventListener("click",()=> {
-        deletionModal.close();
-        // document.body.removeChild(deletionModal);
+    deletionModal.querySelector("#delY").addEventListener("click",(e)=> {  // could be the form closing one - given a refresh will show the changes?
+      e.preventDefault()
+      deletionModal.close(e.target.value);
     })
 
-
+    deletionModal.addEventListener("close", ()=> {
+      document.body.removeChild(deletionModal);
+      resolve(deletionModal.returnValue)
+    })
+  })
 }
 
-function displayToken (key, user, issuer, issuerSettings) {
+function displayToken (issuer, accountGUID, accountDetails, issuerSettings) {
 
     var totp = new jsOTP.totp();
-    
+    let key = accountDetails.secret
+    let user = accountDetails.username
+
     // Initial element creation
 
     let imageData = (issuerSettings.settings.favicon) ? issuerSettings.settings.favicon : "C:/reps/web2fa/img/icon_128.png";
@@ -179,9 +192,28 @@ function displayToken (key, user, issuer, issuerSettings) {
     
     token.appendChild(deleteTokenEl)
     
-    deleteTokenEl.addEventListener("click", ()=>{
-        deleteToken()
+    deleteTokenEl.addEventListener("click", async ()=>{
+      deleteToken(user, imageData).then((deletionEvent) => {
+
+        if (deletionEvent == "remove") {
+
+          chrome.storage.sync.get(["internal"], function(sync) {
+            delete sync.internal.tokens[issuer][accountGUID]
+
+            if ( !(Object.keys(sync.internal.tokens[issuer]).length) ) {
+              delete sync.internal.tokens[issuer]
+              chrome.storage.sync.remove(issuer)
+            }
+            chrome.storage.sync.set(sync);
+          });
+          clearInterval(tokenCountdown);
+          document.querySelector("#tokens").removeChild(token)
+        }
+      })
     })
+
+
+    // not addressed: Missing Icon (Modal?), Copy, Delete. 
 
     // deletionModal.querySelector("#delN").addEventListener("click", ()=>{deletionModal.close()})
 
@@ -192,28 +224,6 @@ function displayToken (key, user, issuer, issuerSettings) {
     //         navigator.clipboard.writeText(p_cont.querySelector(".token").innerText);
     //     });
 
-    
-    
-    //     var delDiv = document.createElement("div");
-    //     var delY = document.createElement("button");
-    //     var delN = document.createElement("button");
-    //     var delText = document.createElement("span");
-    //     delText.innerHTML = `Delete <span id='del_user'>${user}</span>`
-    //     delText.className = "overlayText";
-    //     delY.style.backgroundColor = "#ff7c7c5c";
-
-    //     delY.textContent = "Delete";
-    //     delN.textContent = "Cancel";
-    //     delDiv.className = "overlayBox delDiv anim-fade-in";
-    //     let delOverlay = document.createElement("div");
-    //     delOverlay.className = "overlay";
-
-    //     delDiv.append(delText,delY,delN);
-    //     delOverlay.append(delDiv);
-
-    //     deleteElement.addEventListener("click", ()=>{
-    //     document.body.appendChild(delOverlay);
-    //     delOverlay.style.display = "flex";
 
     //     delY.onclick = function() {
     //         chrome.storage.sync.get(["internal"], function(output) {
@@ -700,3 +710,6 @@ function displayToken (key, user, issuer, issuerSettings) {
     }) : "undefined" != typeof exports ? "undefined" != typeof module && module.exports ? module.exports = exports = F : exports = F : r.jsSHA = F
   }(this);
   
+
+
+  function parseImport() {}
