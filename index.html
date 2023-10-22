@@ -9,54 +9,81 @@
 
   <body>
     <div id="header" class="rim">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" height="20" width="20" id="quickMenu" style="
+    right: 10px;
+    position: absolute;
+    cursor: pointer;
+    top: 7px;
+">
+        <path d="M10 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM4 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM16 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z" fill="#030708"></path>
+      </svg>
+
+      <div>
+        <dialog>
+
+          <div class="closeButton">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="m416 208h-384c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h384c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32z"></path>
+            </svg>
+          </div>
+
+          <div style="height: max-content;">
+
+          <div class="qmTabs">
+            <span class="tabButton activeTab">Manual</span>
+            <span class="tabButton">Import</span>
+            <span class="tabButton">Backup</span>
+          </div>
+
+          <div class="qmContent" style="height: 100%;">
+
+            <div id="qmManualOption" class="tabContent activeContent">
+
+              <div class="mInput">
+                <input type="text" value name="account" required>
+                <div class="mLabel" for="account">Account</div>
+              </div>
+
+              <div class="mfieldKey mInput">
+                <input type="url" value name="key" required>
+                <div class="mLabel" for="key">Secret Key</div>
+              </div>
+
+              <div class="mInput">
+                <input type="text" value name="issuer" required>
+                <div class="mLabel" for="issuer">Issuer</div>
+              </div>
+
+              <div id="knownIssuer">
+                
+              </div>
+
+              <div class="mInput">
+                <input type="text" value name="site">
+                <div class="mLabel" for="site">Setup Page</div>
+              </div>
+
+            </div>
+
+            <div id="qmImportOption" class="tabContent">
+
+            </div>
+
+            <div id="qmBackupOption" class="tabContent">
+
+            </div>
+
+          </div>
+
+          </div>      
+        
+        </dialog>
+      </div>
 
     </div>
 
     <div id="main">
 
       <div id="tokens">
-        <!-- <div class="tokenField">
-          <div class="tokenIssuer">
-            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAA+RJREFUaEPt2lnIdVMYB/DfZ8pU+CKklKGk3CguRFwgYykyhEK4IL5kLLPMMxkzXZgvhIwXJGVImVKIJBGZZzJk6v+1tnbb2fs959vnnO89etfNft+9nrX283/W8/zX86x1FpnxtmjG9dcGYFWs1hPcj/ij5xxzDm8CWB+3Y3esOOfoboFfcBNOxZ8952od3gTwGPbq+NiL+KTRvzU27xhzMq6cBoC4TJa9zfKvYNsBiqyFb7BCi5IBvf00AGyATzs+9C0OwRcNme1wXce4d7DlfACwrDpMHcBneGRZta2NS3wdjakDeA47jgFAYik0Om8AbIT9RtgfEtQX4csxslDmuhe/Vgau02gVxINWYDHeQmSWd3sSe44KYB88vLw1L9//G+vg+/w/7AochPvmCYCosSFCNmMB8AZewlFzpB8fIDv9kVi9wxhf4W4cinVb5MYKYAe8gKewS4diUege3FrAtomeUYI/zwsmBSDudAuS55yN13AHXkcsfT/WwDM4t+wHD5Y4uhhJ9J4vlo4138SxheXeLzv78dgUGXcjtqqB6b0ClTUzZ+jyr8bz3ZLgnYkLy4ebcnn9NHbGbQXkoPnyLv1xvar1BhAGiOVvaKTKW+D6miv9hktxSbF6pUD2lGSoB5YXMUCsfBa+qykatjkfxzSSxd4APsSSASnHesV/E9BpXxc3u7OsUqXbmji91ArZseNSWa2A/70GYBXElQKiXmD1BrA/HsBKWLkoEKV+Kh9/u2Sgp+CKwnaJifTX5Z7AHmUljytjq/66XFYnqzA2F0pwhlFOwOEliAPo4xLElxdgodirC+vkmYC8BmsX5rqs/P0RzsG+eBZX4UTshIdwHjYeJ4A6uyUIAygpSCi1rSUIw1R3FY5vk4u7JL7yjFsNar1dqD5pSsy4zK4dyqcrBVH2i7hMV72deMiekvnaDhbGCmAOvSfSPTKAZH+PT0SV0ScN5aYOX0oYwyZzYZCXJ1nbjoAjcfTvpjYsgMwfELs1EqwE8AGNj+cMKAH4eTkXStYYhhlHe6+wVFLqpW0UAIMUCI2GHqsW5Y8oTDPvSsq5ANSVj+xMAEg6cW3Jhw4rm1sFdCYAbFaSsOT42YnrbSYAdAXmAoBhaKsvCy2swDBW7pJZWIEO6ywE8TDuNciFZv54fRjgo8hM/Xi9TbmcMBxcThrqMrk3y21kW5sagJRvP5SThkHKvIptBnSkQA+4tku+lJFdtfIoq/kf2eY166PYu2PGgEhtW2/JhzbpGHNSOWXopWjb4EEX3UnMUnjnzKdP+xk347RpXnRXCo/jpwZxx4nd0FeK/m9/7NHHdaY69h/00ShA2BNDjAAAAABJRU5ErkJggg==">
-          </div>
-          <div class="tokenUser">John.Smith@email.com</div>
-          <div class="tokenSecret">123 456</div>
-        </div>  
-        <div class="tokenField" style="">
-          <div class="tokenIssuer">
-            <img src="#">
-          </div>
-          <div class="tokenUser">Alec.Zucker@dpac.tas.gov.au</div>
-          <div class="tokenSecret">345 532</div>
-        </div>
-        <div class="tokenField" style="">
-          <div class="tokenIssuer">
-            <img src="#">
-          </div>
-          <div class="tokenUser">alexandernzucker@gmail.com</div>
-          <div class="tokenSecret">993 261</div>
-        </div>
-        <div class="tokenField" style="">
-          <div class="tokenIssuer">
-            <img src="#">
-          </div>
-          <div class="tokenUser">robot</div>
-          <div class="tokenSecret">025 033</div>
-        </div>
-        <div class="tokenField" style="">
-          <div class="tokenIssuer">
-            <img src="#">
-          </div>
-          <div class="tokenUser">Hicallmeal</div>
-          <div class="tokenSecret">113 304</div>
-        </div>
-        <div class="tokenField" style="">
-          <div class="tokenIssuer">
-            <img src="#">
-          </div>
-          <div class="tokenUser">Blotto@gmail.com</div>
-          <div class="tokenSecret">333 078</div>
-        </div> -->
       </div>
 
       <div id="scanner">
@@ -82,6 +109,8 @@
     <div id="chin" class="rim">
 
     </div>
+
+ 
 
     <script src="script2.js"></script> 
 

@@ -68,9 +68,6 @@ body {
   width: 6px;
 }
 
-/* Token Content */
-
-
 
 
 /* Scanner Content */
@@ -134,7 +131,7 @@ body {
 }
 
 
-/*  */
+/* Tokens */
 
 .tokenField {
   grid-template-rows: 31px 37px 14px;
@@ -185,18 +182,25 @@ body {
   user-select: text;
 }
 
-/* Bottom Section - Chin (Visual Only) */
+/* Placeholder Icon Styles */
 
-.rim {
-  height: 30px;
-  position: relative;
-  background-color: var(--slightly-darker-grey);
-  box-shadow: var(--shadow);
+
+.letterIcon {
+  text-align: center;
+  border-radius: 10px;
+  padding: 7px 9px;
+  font-size: 24px;
+  width: 48px;
+  height: 48px;
+}
+
+.letterIcon:hover {
+  filter:brightness(80%);
+  cursor:pointer;
 }
 
 
-
-/* Temp - Delete */
+/* Token Deletion */
 
 .tokenField:hover .deleteButton {
   opacity: 1;
@@ -211,13 +215,13 @@ body {
   /* transition: 70ms ease-in-out opacity; */
 }
 
-.deleteButton svg {
+.deleteButton svg, .closeButton svg {
   width:16px;
   fill: #b1b1b1;
   cursor: pointer;
 }
 
-.deleteButton:hover svg {
+.deleteButton:hover svg, .closeButton:hover svg {
   fill: #838383;
 }
 
@@ -269,7 +273,7 @@ dialog li {
   margin-top:7px;
 }
 
-dialog div:last-child {
+#removalButtons {
   margin-top: 24px;
   display: flex;
   flex-direction: row;
@@ -285,11 +289,11 @@ dialog button {
   color: var(--code-blue);
 }
 
-#delY {
+.proceed {
   color: #e63131; /*  brighter - #e63131 */
 }
 
-/* Temp - Testing CountDown */
+/* CountDown */
 
 .countdown {
   grid-area: time;
@@ -301,13 +305,11 @@ dialog button {
   width: 30px;
 }
 
-/* Removes SVG styling that would hide the time label */
 .base-timer__circle {
   fill: none;
   stroke: none;
 }
 
-/* The SVG path that displays the timer's progress   */
 .base-timer__path-elapsed {
   stroke-width: 5px;
   stroke: #b1b1b1;  
@@ -315,15 +317,9 @@ dialog button {
 
 .base-timer__label {
   position: absolute;
-  
-  /* Size should match the parent container */
   width: 30px;
   height: 30px;
-  
-  /* Keep the label aligned to the top */
   top: 0;
-  
-  /* Create a flexible box that centers content vertically and horizontally */
   display: flex;
   font-size: 13px;
   justify-content: center;
@@ -333,43 +329,24 @@ dialog button {
 }
 
 .base-timer__path-remaining {
-  /* Just as thick as the original ring */
   stroke-width: 5px;
-
-  /* Rounds the line endings to create a seamless circle */
-  /* stroke-linecap: round; */
-
-  /* Makes sure the animation starts at the top of the circle */
   transform: rotate(90deg);
   transform-origin: center;
-
-  /* One second aligns with the speed of the countdown timer */
   transition: 1s linear all;
-
-  /* Allows the ring to change color when the color value updates */
   stroke: currentColor;
   color: var(--code-blue);
-
-  /* stroke-dasharray: 144.51; */
-/* 
-  animation-name: timer;
-  animation-iteration-count: infinite;
-  animation-timing-function: linear;
-  animation-duration: 30s;   */
-
-}
-/* 
-@keyframes timer {
-    100% {
-        stroke-dashoffset: -144.51
-    }
-} */
-
-.base-timer__svg {
-  /* Flips the svg and makes the animation to move left-to-right */
-  /* transform: scaleX(-1); */
 }
 
+
+
+/* Bottom Section - Chin (Visual Only) */
+
+.rim {
+  height: 30px;
+  position: relative;
+  background-color: var(--slightly-darker-grey);
+  box-shadow: var(--shadow);
+}
 
 
 
@@ -388,3 +365,98 @@ dialog button {
   display: inline-block;
   margin-left: 6px;
 }
+
+img[src=''] {
+  visibility: hidden;
+  margin-left: -2px;
+}
+
+
+/* Temp */
+
+.closeButton {
+  position: absolute;
+  top: 13px;
+  left: 210px;
+  width: min-content;
+  height: 10px;
+}
+
+.qmTabs {
+  display: flex;
+  /* flex: 1 0 auto; */
+  align-items: center;
+  height: 32px;
+  justify-content: center;
+}
+
+.tabButton {
+  padding-left: 7px;
+  padding-right: 7px;
+  flex: 1 0 auto;
+  /* height: 32px; */
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.activeTab {
+  color: var(--code-blue);
+}
+
+.tabContent {
+  display: none;
+}
+
+.activeContent {
+  display: block;
+}
+
+/* Manual Account Entry */
+
+.mInput {
+  margin-top: 23px;
+  position: relative;
+}
+
+.mInput input {
+  width: 100%;
+  outline: none;
+  /* border-radius: 3px; */
+  border: none;
+  color: #383838;
+  padding: 4px 7px;
+  border-bottom: 1px solid #dddddd;
+  z-index: 1;
+  position: relative;
+  background: transparent;
+  border-top: 2px solid transparent;
+}
+
+.mLabel {
+  position: absolute;
+  margin-left: 8px;
+  color: #6a6a6a;
+  transform-origin: 39.6667px center;
+  /* cursor: text; */
+  transition: transform .3s cubic-bezier(0.4,0,0.2,1);
+  transform-origin: bottom left;
+  bottom: 8px;
+  user-select: none;
+}
+
+.mInput input:focus ~ .mLabel {
+  transform: scale(0.85) translateY(-21px);
+  color: var(--code-blue)
+
+}
+
+.mInput input:focus {
+  border-bottom-color: var(--code-blue);
+}
+
+.mInput input:not(.mInput input[value='']) ~ .mLabel {
+  transform: scale(0.85) translateY(-21px);
+}
+
+
+

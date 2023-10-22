@@ -36,11 +36,11 @@ function deleteToken(user, imageData) {
         <h3>Remove</h3>
         <div style="line-height: 1.2; text-align: center;">
           <img src="${imageData}" class="imageSmall">
-          <h3 id="dialogUser">${user}</h3>
+          <h3 id="dialogUser">${user}?</h3>
         </div>
         <div>
             <p>This is a <strong>permanent</strong> action that <strong>cannot</strong> be undone.</p>
-            <p>Ensure you: 
+            <p>Ensure you:</p>
         </div>
         <div>
             <ul>
@@ -49,9 +49,9 @@ function deleteToken(user, imageData) {
                 <li>Have an alternative authenticator</li>
             </ul>
         </div>
-        <div>
-            <button id="delN" value="cancel" formmethod="dialog">Cancel</button>
-            <button id="delY" value="remove">Remove</button>
+        <div id="removalButtons">
+            <button class="cancel" value="cancel" formmethod="dialog">Cancel</button>
+            <button class="proceed" value="remove">Remove</button>
         </div>
       </form>
       `
@@ -60,7 +60,7 @@ function deleteToken(user, imageData) {
     
     deletionModal.showModal()
 
-    deletionModal.querySelector("#delY").addEventListener("click",(e)=> {  // could be the form closing one - given a refresh will show the changes?
+    deletionModal.querySelector(".proceed").addEventListener("click",(e)=> {  // could be the form closing one - given a refresh will show the changes?
       e.preventDefault()
       deletionModal.close(e.target.value);
     })
@@ -72,6 +72,48 @@ function deleteToken(user, imageData) {
   })
 }
 
+// helper colour function for Icons..
+function tempColour(string) {
+  let hex = (parseInt(string.split("")
+     .map(c => c.charCodeAt(0).toString(16).padStart(2, "0"))
+     .join("").slice(0,6),16) * 2).toString(16);
+  if (hex.match(/.{1,2}/g).map(e => parseInt(e, 16)).reduce((x,y) => x+y,0) > 376) {
+    return {bgColour:hex, colour:"black"}
+  }
+  return {bgColour:hex, colour:"white"}
+}
+
+// creates placeholder Icon
+function createPlaceholderIcon(issuer) {
+  let colour = tempColour(issuer)
+  let icon = `<div style="color: ${colour.colour}; background-color: #${colour.bgColour}" class="letterIcon">${issuer[0].toUpperCase()}</div>`
+  return icon
+}
+
+function queryIcon(issuer) {
+  let deletionModal = document.createElement("dialog")
+  deletionModal.innerHTML = `
+    <form>
+      <h3>Are you on ${issuer}'s 2FA Setup Page?</h3>
+      <div>
+          <p>If so, click Go</p>
+      </div>
+      <div>
+          <p>Otherwise, navigate to the page or homepage</p>
+          <p>Or type in the address and hit Go</p>
+          <input type="text" placeholder='${issuer}.com/..'>
+      </div>
+      <div>
+          <button class="cancel" formmethod="dialog">Cancel</button>
+          <button class="proceed">Go</button>
+      </div>
+    </form>`
+
+    document.body.appendChild(deletionModal)
+    
+    deletionModal.showModal()
+}
+
 function displayToken (issuer, accountGUID, accountDetails, issuerSettings) {
 
     var totp = new jsOTP.totp();
@@ -79,17 +121,33 @@ function displayToken (issuer, accountGUID, accountDetails, issuerSettings) {
     let user = accountDetails.username
 
     // Initial element creation
-
-    let imageData = (issuerSettings.settings.favicon) ? issuerSettings.settings.favicon : "C:/reps/web2fa/img/icon_128.png";
+  
 
     let token = document.createElement("div");
     token.className = "tokenField";
-    token.innerHTML = `
-        <div class="tokenIssuer">
-            <img src="${imageData}">
-        </div>
-        <div class="tokenUser">${user}</div>
-    `
+
+    let imageData = (issuerSettings) ? issuerSettings.settings.favicon : "";
+
+    if (imageData) {
+      token.innerHTML = `
+      <div class="tokenIssuer">
+          <img src="${imageData}">
+      </div>
+      <div class="tokenUser">${user}</div>
+      ` 
+    }
+    else {
+      let icon = createPlaceholderIcon(issuer);
+      token.innerHTML = `
+      <div class="tokenIssuer">
+          ${icon}
+      </div>
+      <div class="tokenUser">${issuer} | ${user}</div>
+      ` 
+      token.querySelector(".letterIcon").addEventListener("click", (e)=> {queryIcon(issuer)})
+    }
+
+
 
     let secret = document.createElement("div")
     secret.className = "tokenSecret"
@@ -213,39 +271,14 @@ function displayToken (issuer, accountGUID, accountDetails, issuerSettings) {
     })
 
 
-    // not addressed: Missing Icon (Modal?), Copy, Delete. 
-
-    // deletionModal.querySelector("#delN").addEventListener("click", ()=>{deletionModal.close()})
-
-    
+    // not addressed: Missing Icon (Modal?), Copy, ~~Delete~~. 
+   
     //     token.addEventListener("click", ()=> {navigator.clipboard.writeText(p_cont.querySelector(".token").innerText);});
 
     //     copyElement.addEventListener("click", ()=>{
     //         navigator.clipboard.writeText(p_cont.querySelector(".token").innerText);
     //     });
 
-
-    //     delY.onclick = function() {
-    //         chrome.storage.sync.get(["internal"], function(output) {
-    //             delete output.internal.tokens[issuer]["accounts"][user]
-    //             debugger
-    //             if (!(Object.keys(output.internal.tokens[issuer]["accounts"]).length)) {
-    //             output.internal.active.splice(output.internal.active.indexOf(issuer), 1);
-    //             chrome.storage.sync.remove(issuer)
-    //             }
-    //             chrome.storage.sync.set(output);
-    //         });
-    //         clearInterval(tokenCountdown);
-    //         parent.parentNode.removeChild(parent)
-    //         document.body.removeChild(delOverlay);
-    //         delOverlay.style.display = "none";
-    //     }
-    //     delN.onclick = function() {
-    //         document.body.removeChild(delOverlay);
-    //         delOverlay.style.display = "none";
-    //     }
-
-    //     });
 }
 
 
@@ -712,4 +745,100 @@ function displayToken (issuer, accountGUID, accountDetails, issuerSettings) {
   
 
 
-  function parseImport() {}
+function parseImport() {}
+
+document.getElementById("quickMenu").addEventListener("click", () => {
+  document.querySelector("dialog").showModal()
+  document.querySelector(".tabButton").click()
+})
+
+document.querySelector(".closeButton").addEventListener("click", () => {
+  document.querySelector("dialog").close()
+})
+
+function importAccounts() {}
+function backup() {}
+
+
+
+
+
+function manualEntry() {
+  let issuers;
+  let local;
+  chrome.storage.local.get("external", (e)=>{
+    issuerInputHandler.issuers = (Object.keys(e.external));
+    issuerInputHandler.local = e.external;
+  })
+
+  // need to figure out -> better to do this, or just add event listeners once at popup start.
+
+  document.querySelectorAll(".mInput input:not(.mInput input[name='issuer'])").forEach((item, index, array) => {
+    item.removeEventListener("input", inputHandler)
+    item.addEventListener("input", inputHandler)
+  })
+
+  document.querySelector("input[name='issuer']").removeEventListener("input", issuerInputHandler.manualEntryHandler)
+  document.querySelector("input[name='issuer']").addEventListener("input", issuerInputHandler.manualEntryHandler)
+}
+
+function inputHandler(e) {
+  e.target.setAttribute("value", e.target.value) 
+}
+
+const issuerInputHandler = {
+  pollIssuers: undefined,
+  local: undefined,
+  issuers: undefined,
+
+
+  manualEntryHandler(e) {
+    e.target.setAttribute("value", e.target.value) 
+    clearTimeout(issuerInputHandler.pollIssuers)
+    issuerInputHandler.pollIssuers = setTimeout(() => {
+      console.log(e.target.value)
+      if (issuerInputHandler.issuers.includes(e.target.value)) {
+        document.getElementById("knownIssuer").innerHTML = `<span class="m_info"><span style="color: #0f9719;">Recognized</span> <img class="imageSmall" src="${issuerInputHandler.local[e.target.value.toLowerCase()].settings.favicon}"> <span style="font-weight: 600;">${e.target.value}</span> </span>`;
+      }
+      else {
+        document.getElementById("knownIssuer").innerHTML = `<div class="mInput">
+        <input type="text" value name="site">
+        <div class="mLabel" for="site">Setup Page</div>
+      </div>`
+      }
+      
+    }, 1000)
+  }
+}
+
+// function manualEntryHandler(e, issuers, local) {
+//   e.target.setAttribute("value", e.target.value) 
+//   if (e.target.name == "issuer") {
+
+//     pollIssuers = setTimeout(() => {
+//       if (issuers.includes(e.target.value)) {
+//         document.getElementById("knownIssuer").innerHTML = `<span class="m_info"><span style="color: #0f9719;">Recognized</span> <img width="12" src="${local[e.target.value.toLowerCase()].settings.favicon}"> <span style="font-weight: 600;">${e.target.value}</span> </span>`;
+//       }
+      
+//     }, 1000)
+//   }
+// }
+
+
+const qmRef = {
+  0: manualEntry,
+  1: importAccounts,
+  2: backup,
+}
+
+document.querySelectorAll(".tabButton").forEach((item, index, array) => {
+  item.addEventListener("click", (e)=> {
+    document.querySelector(".activeTab").classList.toggle("activeTab")
+    item.classList.toggle("activeTab")
+
+    document.querySelector(".activeContent").classList.toggle("activeContent")
+    document.querySelector(".qmContent").children[index].classList.toggle("activeContent")
+
+    qmRef[index]()
+  })
+});
