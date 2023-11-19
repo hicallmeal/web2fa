@@ -273,7 +273,7 @@ dialog li {
   margin-top:7px;
 }
 
-#removalButtons {
+.dialogOptions {
   margin-top: 24px;
   display: flex;
   flex-direction: row;
@@ -303,6 +303,7 @@ dialog button {
   position: relative;
   height: 30px;
   width: 30px;
+  /* top: Inline with [ Code: 2px | Icon: -5px ]  */
 }
 
 .base-timer__circle {
@@ -336,7 +337,9 @@ dialog button {
   stroke: currentColor;
   color: var(--code-blue);
 }
-
+.noTransition {
+  transition: none;
+}
 
 
 /* Bottom Section - Chin (Visual Only) */
@@ -418,7 +421,7 @@ img[src=''] {
   position: relative;
 }
 
-.mInput input {
+.dialogInput {
   width: 100%;
   outline: none;
   /* border-radius: 3px; */
@@ -444,17 +447,17 @@ img[src=''] {
   user-select: none;
 }
 
-.mInput input:focus ~ .mLabel {
+.dialogInput:focus ~ .mLabel {
   transform: scale(0.85) translateY(-21px);
   color: var(--code-blue)
 
 }
 
-.mInput input:focus {
+.dialogInput:focus {
   border-bottom-color: var(--code-blue);
 }
 
-.mInput input:not(.mInput input[value='']) ~ .mLabel {
+.dialogInput:not(.dialogInput[value='']) ~ .mLabel {
   transform: scale(0.85) translateY(-21px);
 }
 

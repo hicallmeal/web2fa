@@ -49,7 +49,7 @@ function deleteToken(user, imageData) {
                 <li>Have an alternative authenticator</li>
             </ul>
         </div>
-        <div id="removalButtons">
+        <div class="dialogOptions">
             <button class="cancel" value="cancel" formmethod="dialog">Cancel</button>
             <button class="proceed" value="remove">Remove</button>
         </div>
@@ -96,16 +96,15 @@ function queryIcon(issuer) {
     <form>
       <h3>Are you on ${issuer}'s 2FA Setup Page?</h3>
       <div>
-          <p>If so, click Go</p>
+          <p>If so, hit Go</p>
       </div>
-      <div>
-          <p>Otherwise, navigate to the page or homepage</p>
+      <div> 
           <p>Or type in the address and hit Go</p>
-          <input type="text" placeholder='${issuer}.com/..'>
+          <input class="dialogInput" type="text" placeholder='${issuer}.com/..'>
       </div>
-      <div>
+      <div class="dialogOptions">
           <button class="cancel" formmethod="dialog">Cancel</button>
-          <button class="proceed">Go</button>
+          <button class="go">Go</button>
       </div>
     </form>`
 
@@ -229,14 +228,24 @@ function displayToken (issuer, accountGUID, accountDetails, issuerSettings) {
         
         // if (initSeconds == 30 || initSeconds == 0) {
         
+        // For No loopy transition
+        countdown.querySelector("#base-timer-path-remaining").classList.remove("noTransition")
+          
         if (initDelay == 0) {
-            let keyCode = totp.getOtp(key)
-            secret.innerText = `${keyCode.slice(0,3)} ${keyCode.slice(3)}`;
-            initDelay = 30
+          // set animation transition to none
+          let keyCode = totp.getOtp(key)
+          secret.innerText = `${keyCode.slice(0,3)} ${keyCode.slice(3)}`;
+          initDelay = 30
+          
+          // For No loopy transition
+          countdown.querySelector("#base-timer-path-remaining").classList.add("noTransition")
         }
+
         setCircleDasharray();
         
+
         countdown.querySelector(".time").innerText = initDelay;
+
         
             
     }, 1000);
@@ -773,7 +782,7 @@ function manualEntry() {
 
   // need to figure out -> better to do this, or just add event listeners once at popup start.
 
-  document.querySelectorAll(".mInput input:not(.mInput input[name='issuer'])").forEach((item, index, array) => {
+  document.querySelectorAll(".dialogInput:not(.dialogInput[name='issuer'])").forEach((item, index, array) => {
     item.removeEventListener("input", inputHandler)
     item.addEventListener("input", inputHandler)
   })
@@ -802,7 +811,7 @@ const issuerInputHandler = {
       }
       else {
         document.getElementById("knownIssuer").innerHTML = `<div class="mInput">
-        <input type="text" value name="site">
+        <input type="text" value name="site" class="dialogInput">
         <div class="mLabel" for="site">Setup Page</div>
       </div>`
       }
