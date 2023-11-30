@@ -65,8 +65,8 @@ chrome.runtime.onMessage.addListener(
 
             case "addToken":
 
-              let storageReturn = storeData(message.tokenData)
-              sendResponse({userGUID: storageReturn.userGUID, exists: storageReturn.exists})
+              storeData(message.tokenData, sendResponse)
+              
               
               return true
 
@@ -133,7 +133,7 @@ chrome.runtime.onMessage.addListener(
 });
 
 
-function storeData(tokenData) {
+function storeData(tokenData, callback) {
 
   const { user, secret, issuer, settings } = tokenData // lowercase issuer
 
@@ -164,8 +164,6 @@ function storeData(tokenData) {
       sync[issuer] = settings;
     }
     chrome.storage.sync.set(sync);
-    return {"userGUID": userGUID, "exists": exists};
+    callback({"userGUID": userGUID, "settings": sync[issuer]});
   })
 }
-
-

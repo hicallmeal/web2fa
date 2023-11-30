@@ -835,18 +835,24 @@ const manualEntryPoint = {
       // check if icon exists - assumption is that local will always have ?icon, on sync transfer, data is loaded to local
       // but then, an entry needs to be added too..
       
-      let settings; 
+      let settings = e.settings; 
 
-      if (!e.exists) {
+      if (!settings) {
         chrome.storage.local.get(["external"], storage => {
           settings = storage.external[tokenData.issuer]
           // need to figure out/establish how caching is properly going to work.. 
           if (settings) {
+            displayToken(tokenData.issuer, e.userGUID, {username: tokenData.user, secret: tokenData.secret}, settings)
+            Array.from(document.querySelectorAll(".tokenField")).at(-1).scrollIntoView({behavior:"smooth"})
             chrome.storage.sync.set({[tokenData.issuer]: settings});
           }
         })
-      }    
-      displayToken(tokenData.issuer, e.userGUID, {username: tokenData.user, secret: tokenData.secret}, settings)
+      } 
+      else { // okay. for scroll and for future proof - displaytoken will be a class or something, with a .scrollTo method and a .updateDetails method with user, secret, image params.
+        displayToken(tokenData.issuer, e.userGUID, {username: tokenData.user, secret: tokenData.secret}, settings) // that way .update image can be called after displayToken.
+        Array.from(document.querySelectorAll(".tokenField")).at(-1).scrollIntoView({behavior:"smooth"})
+      }
+      // could for now scroll to last elem?
     })
     e.target.reset()
     // scroll to new token?
