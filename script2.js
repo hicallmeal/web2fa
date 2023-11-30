@@ -33,25 +33,29 @@ function deleteToken(user, imageData) {
     let deletionModal = document.createElement("dialog")
     deletionModal.innerHTML = `
       <form>
-        <h3>Remove</h3>
-        <div style="line-height: 1.2; text-align: center;">
-          <img src="${imageData}" class="imageSmall">
-          <h3 id="dialogUser">${user}?</h3>
+        <div class="dialogTitle">
+          <h3>Remove</h3>
+          <div style="line-height: 1.2; text-align: center;">
+            <img src="${imageData}" class="imageSmall">
+            <h3 id="dialogUser">${user}?</h3>
+          </div>
         </div>
-        <div>
-            <p>This is a <strong>permanent</strong> action that <strong>cannot</strong> be undone.</p>
-            <p>Ensure you:</p>
-        </div>
-        <div>
-            <ul>
-                <li>Back up your codes</li>
-                <li>Turn off 2FA for this account</li>
-                <li>Have an alternative authenticator</li>
-            </ul>
+        <div class="dialogContent">
+          <div>
+              <p>This is a <strong>permanent</strong> action that <strong>cannot</strong> be undone.</p>
+              <p>Ensure you:</p>
+          </div>
+          <div>
+              <ul>
+                  <li>Back up your codes</li>
+                  <li>Turn off 2FA for this account</li>
+                  <li>Have an alternative authenticator</li>
+              </ul>
+          </div>
         </div>
         <div class="dialogOptions">
-            <button class="cancel" value="cancel" formmethod="dialog">Cancel</button>
-            <button class="proceed" value="remove">Remove</button>
+          <button class="proceed" value="remove">Remove</button>
+          <button class="cancel" value="cancel" formmethod="dialog" autofocus>Cancel</button>
         </div>
       </form>
       `
@@ -91,30 +95,62 @@ function createPlaceholderIcon(issuer) {
 }
 
 function queryIcon(issuer) {
-  let deletionModal = document.createElement("dialog")
-  deletionModal.innerHTML = `
+  let iconModal = document.createElement("dialog")
+  iconModal.innerHTML = `
     <form>
-      <h3>Are you on ${issuer}'s 2FA Setup Page?</h3>
-      <div>
-          <p>If so, hit Go</p>
+      <div class="dialogTitle">
+        <h3>Are you on ${issuer}'s 2FA Setup Page?</h3>
       </div>
-      <div> 
-          <p>Or type in the address and hit Go</p>
-          <input class="dialogInput" type="text" placeholder='${issuer}.com/..'>
+      <div>
+        <p>Go there or the Home page and click <strong>Yes</strong></p>
       </div>
       <div class="dialogOptions">
-          <button class="cancel" formmethod="dialog">Cancel</button>
-          <button class="go">Go</button>
+        <button id="yes">Yes</button>
+        <button class="cancel" formmethod="dialog" autofocus>No</button>
       </div>
-    </form>`
+    </form>
+    `
+    iconModal.style.height = "min-content";
 
-    document.body.appendChild(deletionModal)
+    document.body.appendChild(iconModal)
     
-    deletionModal.showModal()
+    iconModal.showModal()
+
+    iconModal.querySelector("#yes").addEventListener("click",(e)=> { 
+      e.preventDefault()
+      chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        chrome.tabs.sendMessage(tabs[0].id, {type: "updateIcon", issuer:issuer, fav: tabs[0].favIconUrl});
+      });
+      window.close();
+    })
+
+    iconModal.addEventListener("close", ()=> {
+      document.body.removeChild(iconModal);
+    })
+
+    // <form>
+    //   <div class="dialogTitle">
+    //     <h3>Are you on ${issuer}'s 2FA Setup Page?</h3>
+    //   </div>
+    //   <div class="dialogContent">
+    //     <div>
+    //         <p>Go to ${issuer}'s 2FA or Home Page</p>
+    //         <p>Or type in the address</p>
+    //         <input class="dialogInput" type="text" placeholder='${issuer}.com/..'>
+    //         <p>Then hit Go</p>
+    //     </div>
+    //   </div>
+    //   <div class="dialogOptions">
+    //     <button class="go">Go</button>
+    //     <button class="cancel" formmethod="dialog">Cancel</button>
+    //   </div>
+    // </form>
+
+
 }
 
-function displayToken (issuer, accountGUID, accountDetails, issuerSettings) {
-
+function displayToken (issuer, userGUID, accountDetails, issuerSettings) {
+    // maybe accept just one object?
     var totp = new jsOTP.totp();
     let key = accountDetails.secret
     let user = accountDetails.username
@@ -228,16 +264,15 @@ function displayToken (issuer, accountGUID, accountDetails, issuerSettings) {
         
         // if (initSeconds == 30 || initSeconds == 0) {
         
-        // For No loopy transition
+        // For No loopy transition - visually looks slower though..
         countdown.querySelector("#base-timer-path-remaining").classList.remove("noTransition")
           
         if (initDelay == 0) {
-          // set animation transition to none
           let keyCode = totp.getOtp(key)
           secret.innerText = `${keyCode.slice(0,3)} ${keyCode.slice(3)}`;
           initDelay = 30
           
-          // For No loopy transition
+          // For No loopy transition - visually looks slower though..
           countdown.querySelector("#base-timer-path-remaining").classList.add("noTransition")
         }
 
@@ -265,7 +300,7 @@ function displayToken (issuer, accountGUID, accountDetails, issuerSettings) {
         if (deletionEvent == "remove") {
 
           chrome.storage.sync.get(["internal"], function(sync) {
-            delete sync.internal.tokens[issuer][accountGUID]
+            delete sync.internal.tokens[issuer][userGUID]
 
             if ( !(Object.keys(sync.internal.tokens[issuer]).length) ) {
               delete sync.internal.tokens[issuer]
@@ -769,56 +804,103 @@ function importAccounts() {}
 function backup() {}
 
 
+const manualEntryPoint = {
+  entryFields : {
+    account:"",
+    key:"",
+    issuer:"",
+    settings: ""
+  },
+
+  // inputHandler(e) {
+  //   e.target.setAttribute("value", e.target.value)
+  //   manualEntryPoint.entryFields[e.target.name] = e.target.value;
+  // },
+
+  inputValidation(e) { // CONSISTENCY with data keys + variable names!!
+    // e.preventDefault()
+    // debugger
+    let tokenData = Object.fromEntries(new FormData(e.target))
+    // console.log(tokenData.entries())
+    // for (const [name,value] of tokenData) {
+    //   console.log(name, ":", value)
+    // }
+    
+    // doing it here incase user enters spaces.
+    console.log(tokenData)
+    tokenData["secret"] = tokenData["secret"].replaceAll(" ", "");
+    tokenData["user"] = tokenData["user"].replaceAll(" ", "");
+
+    chrome.runtime.sendMessage({type:"addToken", tokenData:tokenData}, e => {
+      // check if icon exists - assumption is that local will always have ?icon, on sync transfer, data is loaded to local
+      // but then, an entry needs to be added too..
+      
+      let settings; 
+
+      if (!e.exists) {
+        chrome.storage.local.get(["external"], storage => {
+          settings = storage.external[tokenData.issuer]
+          // need to figure out/establish how caching is properly going to work.. 
+          if (settings) {
+            chrome.storage.sync.set({[tokenData.issuer]: settings});
+          }
+        })
+      }    
+      displayToken(tokenData.issuer, e.userGUID, {username: tokenData.user, secret: tokenData.secret}, settings)
+    })
+    e.target.reset()
+    // scroll to new token?
+  }
+}
+  // let issuers;
+  // let local;
+  // chrome.storage.local.get("external", (e)=>{
+  //   issuerInputHandler.issuers = (Object.keys(e.external));
+  //   issuerInputHandler.local = e.external;
+  // })
 
 
-
-function manualEntry() {
-  let issuers;
-  let local;
-  chrome.storage.local.get("external", (e)=>{
-    issuerInputHandler.issuers = (Object.keys(e.external));
-    issuerInputHandler.local = e.external;
-  })
 
   // need to figure out -> better to do this, or just add event listeners once at popup start.
 
-  document.querySelectorAll(".dialogInput:not(.dialogInput[name='issuer'])").forEach((item, index, array) => {
-    item.removeEventListener("input", inputHandler)
-    item.addEventListener("input", inputHandler)
-  })
+  // document.querySelectorAll(".dialogInput:not(.dialogInput[name='issuer'])").forEach((item, index, array) => {
+    
+    
+    // document.querySelector("input[name='issuer']").removeEventListener("input", issuerInputHandler.manualEntryHandler)
+    // document.querySelector("input[name='issuer']").addEventListener("input", issuerInputHandler.manualEntryHandler)
 
-  document.querySelector("input[name='issuer']").removeEventListener("input", issuerInputHandler.manualEntryHandler)
-  document.querySelector("input[name='issuer']").addEventListener("input", issuerInputHandler.manualEntryHandler)
-}
+document.querySelector("#qmManualOption form").addEventListener("submit", manualEntryPoint.inputValidation)
 
-function inputHandler(e) {
-  e.target.setAttribute("value", e.target.value) 
-}
-
-const issuerInputHandler = {
-  pollIssuers: undefined,
-  local: undefined,
-  issuers: undefined,
+document.querySelectorAll(".dialogInput").forEach((item, index, array) => {
+  item.removeEventListener("input", manualEntryPoint.inputHandler)
+  item.addEventListener("input", manualEntryPoint.inputHandler)
+})
 
 
-  manualEntryHandler(e) {
-    e.target.setAttribute("value", e.target.value) 
-    clearTimeout(issuerInputHandler.pollIssuers)
-    issuerInputHandler.pollIssuers = setTimeout(() => {
-      console.log(e.target.value)
-      if (issuerInputHandler.issuers.includes(e.target.value)) {
-        document.getElementById("knownIssuer").innerHTML = `<span class="m_info"><span style="color: #0f9719;">Recognized</span> <img class="imageSmall" src="${issuerInputHandler.local[e.target.value.toLowerCase()].settings.favicon}"> <span style="font-weight: 600;">${e.target.value}</span> </span>`;
-      }
-      else {
-        document.getElementById("knownIssuer").innerHTML = `<div class="mInput">
-        <input type="text" value name="site" class="dialogInput">
-        <div class="mLabel" for="site">Setup Page</div>
-      </div>`
-      }
+// const issuerInputHandler = {
+//   pollIssuers: undefined,
+//   local: undefined,
+//   issuers: undefined,
+
+
+//   manualEntryHandler(e) {
+//     e.target.setAttribute("value", e.target.value) 
+//     clearTimeout(issuerInputHandler.pollIssuers)
+//     issuerInputHandler.pollIssuers = setTimeout(() => {
+//       console.log(e.target.value)
+//       if (issuerInputHandler.issuers.includes(e.target.value)) {
+//         document.getElementById("knownIssuer").innerHTML = `<span class="m_info"><span style="color: #0f9719;">Recognized</span> <img class="imageSmall" src="${issuerInputHandler.local[e.target.value.toLowerCase()].settings.favicon}"> <span style="font-weight: 600;">${e.target.value}</span> </span>`;
+//       }
+//       else {
+//         document.getElementById("knownIssuer").innerHTML = `<div class="mInput">
+//         <input type="text" value name="site" class="dialogInput">
+//         <div class="mLabel" for="site">Setup Page</div>
+//       </div>`
+//       }
       
-    }, 1000)
-  }
-}
+//     }, 1000)
+//   }
+// }
 
 // function manualEntryHandler(e, issuers, local) {
 //   e.target.setAttribute("value", e.target.value) 
@@ -835,7 +917,7 @@ const issuerInputHandler = {
 
 
 const qmRef = {
-  0: manualEntry,
+  0: manualEntryPoint.manualEntry,
   1: importAccounts,
   2: backup,
 }
@@ -846,8 +928,34 @@ document.querySelectorAll(".tabButton").forEach((item, index, array) => {
     item.classList.toggle("activeTab")
 
     document.querySelector(".activeContent").classList.toggle("activeContent")
-    document.querySelector(".qmContent").children[index].classList.toggle("activeContent")
-
-    qmRef[index]()
+    document.querySelector("#qmContent").children[index].classList.toggle("activeContent")
   })
 });
+
+
+function fileHandler(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (ev.dataTransfer.items) {
+    // Use DataTransferItemList interface to access the file(s)
+    [...ev.dataTransfer.items].forEach((item, i) => {
+      // If dropped items aren't files, reject them
+      if (item.kind === 'file') {
+        const file = item.getAsFile();
+        console.log(`… file[${i}].name = ${file.name}`);
+      }
+    });
+  } else {
+    // Use DataTransfer interface to access the file(s)
+    [...ev.dataTransfer.files].forEach((file, i) => {
+      console.log(`… file[${i}].name = ${file.name}`);
+    });
+  }
+}
+
+// thinking what if - full back up is External + TOTP format accounts, instead of all of sync and all of external.
+// that also means only one process for importing accounts
+// will have to think about it.
+
+// i guess it's not proofed for future synced settings..

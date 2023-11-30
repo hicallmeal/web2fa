@@ -26,7 +26,7 @@ chrome.runtime.onMessage.addListener(
      function(message, sender, sendResponse) {
         switch(message.type) {
             case "favicon":
-              chrome.tabs.create({url:message.url, selected:false}).then(()=> {
+              chrome.tabs.create({url:message.url, active:false}).then(()=> {
                 chrome.tabs.query({active: true, currentWindow: true}, ()=> {
                   chrome.tabs.onUpdated.addListener(function test(tabId, changeInfo, tab) {
                     if (tab.url.indexOf(message.url) != -1 && changeInfo.status == 'complete') {
@@ -46,33 +46,53 @@ chrome.runtime.onMessage.addListener(
                     active: true,
                     currentWindow: true
                 };
-                chrome.tabs.query(queryInfo, function (tabs) {
+                chrome.tabs.query(queryInfo, function (tabs) {  //https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/extensionTypes/ImageDetails#rect
                     sendResponse({tabC:tabCapture, fav:tabs[0].favIconUrl}); //it may be easier to leave the faviconurl, instead of checking storage for whether the site is known
                 });                                                          //may be faster too
               });
               return true
 
-            case "faviconUrl":
-              var queryInfo = {
-                  active: true,
-                  currentWindow: true
-              };
-              chrome.tabs.query(queryInfo, function (tabs) {
-                  sendResponse({fav:tabs[0].favIconUrl}); //it may be easier to leave the faviconurl, instead of checking storage for whether the site is known
-              });
+            // case "faviconUrl":
+            //   var queryInfo = {
+            //       active: true,
+            //       currentWindow: true
+            //   };
+            //   chrome.tabs.query(queryInfo, function (tabs) {
+            //       sendResponse({fav:tabs[0].favIconUrl}); //it may be easier to leave the faviconurl, instead of checking storage for whether the site is known
+            //   });
+            //   return true
+
+
+            case "addToken":
+
+              let storageReturn = storeData(message.tokenData)
+              sendResponse({userGUID: storageReturn.userGUID, exists: storageReturn.exists})
+              
               return true
 
             case "manual":
+              // Open Setup/Home Page
               chrome.tabs.create({url:`https://${message.url}`, selected:false}).then(function() {
+
                 chrome.tabs.query({active: true, currentWindow: true}, function(site_tab) {
+                  
+                  
                   chrome.tabs.onUpdated.addListener(function test(tabId, changeInfo, tab) {
+
+                    // On Load complete
                     if (tab.url.indexOf(message.url) != -1 && changeInfo.status == 'complete') {
                       chrome.tabs.onUpdated.removeListener(test)
+
+                      // Open Favicon Page
                       chrome.tabs.create({url:tab.favIconUrl}).then(function() {
                         chrome.tabs.query({active: true, currentWindow: true}, function() {
                           chrome.tabs.onUpdated.addListener(function test(tabId, changeInfo, tab) {
+
+                            // On Load complete
                             if (changeInfo.status == 'complete') {
                               chrome.tabs.onUpdated.removeListener(test)
+
+                              // Send message to page, to fetch Favicon Data
                               chrome.tabs.sendMessage(tab.id, {type:"fav_url"}, function(response) {
 
                                 chrome.storage.local.get(["external"], (local)=> {
@@ -86,7 +106,8 @@ chrome.runtime.onMessage.addListener(
                                   }
                                   local.external[message.data.issuer] = issuerSettings;
                                   chrome.storage.local.set(local);
-                                  storeData(message.data.user, message.data.key, message.data.issuer, issuerSettings);
+                                  // storeData(message.data.user, message.data.key, message.data.issuer, issuerSettings);
+                                  // if used - update StoreData ^
                                 })
                               })
                             }
@@ -111,32 +132,40 @@ chrome.runtime.onMessage.addListener(
           }
 });
 
-function storeData(user, secret, issuer, settings) {
 
-  chrome.storage.sync.get(['internal'], (sync) => {
-    if (sync.internal.tokens[issuer]) {
-      sync.internal.tokens[issuer]["accounts"][user] =
+function storeData(tokenData) {
+
+  const { user, secret, issuer, settings } = tokenData // lowercase issuer
+
+  chrome.storage.sync.get(null, (sync) => {
+    
+    let userGUID = crypto.randomUUID()
+    let exists = sync.internal.tokens[issuer]
+
+    if (exists) {
+      sync.internal.tokens[issuer][userGUID] = 
       {
-        "secret":secret,
+        "username": user,
+        "secret":secret
       };
     }
+
     else {
-      sync.internal.tokens[issuer] =
-      {
-        "accounts":
-          {
-          [user]:
-              {
-                "secret":secret
-              }
-          }
+      sync.internal.tokens[issuer] = {
+        [userGUID]:
+            {
+              "username": user,
+              "secret":secret
+            }
       };
     }
 
-    if (!(sync.internal.active.includes(issuer))) {
-      sync.internal.active.push(issuer);
-      chrome.storage.sync.set({[issuer]: settings});
+    if (!(sync[issuer]) && settings) {
+      sync[issuer] = settings;
     }
     chrome.storage.sync.set(sync);
+    return {"userGUID": userGUID, "exists": exists};
   })
 }
+
+

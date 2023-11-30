@@ -77,7 +77,7 @@ async function getQR() { // have not yet addressed
   })
 }
 
-function storeData(user, secret, issuer, settings) {
+function storeData(user, secret, issuer, settings) {  // could be in bg script
 
   chrome.storage.sync.get(null, (sync) => {
     
@@ -119,6 +119,14 @@ function getFavicon(response, callback) {
       chrome.runtime.sendMessage({type:"favicon", url:imageUrl}, function (te){
         callback(te.favicon);
       });
+      return
+    }
+    if (imageUrl.includes(".svg")) {
+      svgData = await response.text()
+      svgData.replace(/width="[0-9]+"/, 'width="48"').replace(/height="[0-9]+"/, 'height="48"').replace(/viewBox="[0-9 ]+"/, 'viewBox="0 0 48 48"')
+      // don't have to even b64 encode? - guess so
+      callback("data:image/svg+xml,"+encodeURIComponent(svgData))
+      return
     }
     const imageBlob = await response.blob()
     const reader = new FileReader();
@@ -127,7 +135,7 @@ function getFavicon(response, callback) {
       const imageData = reader.result;
       if (!(Math.round((imageData.split(",")[1].length)*3/4) > 7900)) { // need to check whether (png vs webp) b64 encodes it differently
         callback(imageData);                                            // in reference to the '* 3/4'
-      }
+      }                                                                 // looks like svg does.. (see web.snapchat.com)
       else {
         getImageDataURL(imageData, (updatedImageData) => {callback(updatedImageData)});
       }
@@ -144,7 +152,7 @@ function getImageDataURL(source, callback){
     cans.height = image.naturalHeight;
     cans.getContext('2d').drawImage(image, 0,0);
     let q = 1
-    while (cans.toDataURL("image/webp", q).length > 7900) { // 7900 is semi-arbitrary. icon data + other < 8KB quota
+    while (cans.toDataURL("image/webp", q).length > 7900 && q > 0) { // 7900 is semi-arbitrary. icon data + other < 8KB quota
       q -= 0.1;
     }
     callback(cans.toDataURL("image/webp", q));
@@ -168,7 +176,7 @@ chrome.runtime.onMessage.addListener(
               }
               else {
                 var svgIconElement = document.querySelector("svg").outerHTML;
-                var svgDataURL = `data:image/svg+xml,${encodeURIComponent(svgIconElement)}`; // SO - 28450471
+                var svgDataURL = "data:image/svg+xml,"+encodeURIComponent(svgIconElement); // SO - 28450471
                 sendResponse({favi:svgDataURL});
                 window.close();
                 return true
@@ -266,44 +274,30 @@ chrome.runtime.onMessage.addListener(
               });
               return true
 
-            case "updateIcon": // have not yet addressed
+            case "updateIcon": // have not yet addressed - maybe i have
+                console.log("Test")
                 chrome.storage.local.get(["external"], (local) => {
-                  chrome.runtime.sendMessage({type:"faviconUrl"}, (response)=> {
-                    getFavicon(response.fav, function(favicon) {
-                        getImageDataURL(favicon, (favicon) => {
-                          if (!(favicon.toDataURL() > 7900)) {
 
-                            const issuerSettings = {
-                              "settings":
-                              {
-                                "host":window.location.hostname.substring(window.location.hostname.lastIndexOf(".", window.location.hostname.lastIndexOf(".") - 1) + 1), //function?
-                                "setup_page" : window.location.href,
-                                "favicon" : favicon.toDataURL()
-                              }
+                  // chrome.runtime.sendMessage({type:"faviconUrl"}, (response)=> {
+
+                    getFavicon(message.fav, function(favicon) {
+                      
+                      let issuerSettings = {
+                        "settings": {
+                          "favicon": favicon,
+                          "icon_page": message.fav,
+                          "setup_page" : window.location.href
                         }
-                            local.external[message.issuer] = issuerSettings;
-                            chrome.storage.local.set(local)
-                            chrome.storage.sync.set({[message.issuer]: issuerSettings});
-                          }
-                          else {
-                            reduceImageSize(favicon.toDataURL(), (favicon)=> {
-                              const issuerSettings = {
-                                "settings":
-                                {
-                                  "host":window.location.hostname.substring(window.location.hostname.lastIndexOf(".", window.location.hostname.lastIndexOf(".") - 1) + 1), //function?
-                                  "setup_page" : window.location.href,
-                                  "favicon" : favicon.toDataURL()
-                                }
-                              }
-                              local.external[message.issuer] = issuerSettings;
-                              chrome.storage.local.set(local)
-                              chrome.storage.sync.set({[message.issuer]: issuerSettings});
-                            })
-                          }
-                        })
-                      })
+                      }
+
+                      local.external[message.issuer] = issuerSettings;
+                      chrome.storage.local.set(local)
+                      chrome.storage.sync.set({[message.issuer]: issuerSettings});
+
                     })
-                });
+                  // })
+                })
+                
                 return true
             default:
                 console.error("Unrecognised message: ", message);

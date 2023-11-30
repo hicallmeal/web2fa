@@ -26,7 +26,7 @@
             </svg>
           </div>
 
-          <div style="height: max-content;">
+          <div id= "what">
 
           <div class="qmTabs">
             <span class="tabButton activeTab">Manual</span>
@@ -34,38 +34,58 @@
             <span class="tabButton">Backup</span>
           </div>
 
-          <div class="qmContent" style="height: 100%;">
+          <div id="qmContent" style="height: 100%;">
 
             <div id="qmManualOption" class="tabContent activeContent">
+              <form>
+                <div>
+                  <div class="mInput">
+                    <!-- validate this (for generic export purposes!) -->
+                    <input class="dialogInput" type="text" name="user" required>
+                    <div class="mLabel" for="user">Account</div>
+                  </div>
 
-              <div class="mInput">
-                <input class="dialogInput" type="text" value name="account" required>
-                <div class="mLabel" for="account">Account</div>
-              </div>
+                  <div class="mfieldKey mInput">
+                    <input class="dialogInput" type="text" name="secret" minlength="16" pattern="[a-zA-Z2-7 ]+=*" required>
+                    <div class="mLabel" for="secret">Secret Key</div>
+                  </div>
 
-              <div class="mfieldKey mInput">
-                <input class="dialogInput" type="url" value name="key" required>
-                <div class="mLabel" for="key">Secret Key</div>
-              </div>
-
-              <div class="mInput">
-                <input class="dialogInput" type="text" value name="issuer" required>
-                <div class="mLabel" for="issuer">Issuer</div>
-              </div>
-
-              <div id="knownIssuer">
+                  <div class="mInput">
+                    <input class="dialogInput" type="text" name="issuer" required>
+                    <div class="mLabel" for="issuer">Issuer</div>
+                  </div>
+                  
+                </div>
+                <div style="align-self: center">
+                  <button name="manualEntry" type="submit" formmethod="dialog">Add</button>
+                </div>
+              </form>
+            </div>
+              <!-- <div id="knownIssuer">
                 
               </div>
 
               <div class="mInput">
                 <input class="dialogInput" type="text" value name="site">
                 <div class="mLabel" for="site">Setup Page</div>
-              </div>
-
-            </div>
+              </div> -->
+            
 
             <div id="qmImportOption" class="tabContent">
+              <div class="file_zone">
+                <span>Select or drop file</span>
 
+                <input id="file_input" type="file" accept="text/plain, .json" hidden>
+              </div>
+              <div class="import_content">
+                <div class="overwrite_check">
+                  <input type="checkbox" id="importOverwrite">
+                  <label for="importOverwrite">Overwrite Data</label>
+                </div>
+                <div class="import_button_box">
+                  <button class="import_button uButton">Import</button>
+                </div>
+              </div>
             </div>
 
             <div id="qmBackupOption" class="tabContent">
