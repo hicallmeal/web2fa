@@ -27,16 +27,19 @@ document.querySelector("#scanner").addEventListener("click", ()=> {
 });
 
 
-function deleteToken(user, imageData) {
+function deleteToken(user, imageData, issuer) {
   return new Promise((resolve) => {
 
     let deletionModal = document.createElement("dialog")
+    // did have a look into "img[src='']:before" for non-existent images, but couldn't quite implement it
+
+    user = (imageData) ? user : `${issuer} | ${user}`
     deletionModal.innerHTML = `
       <form>
         <div class="dialogTitle">
           <h3>Remove</h3>
           <div style="line-height: 1.2; text-align: center;">
-            <img src="${imageData}" class="imageSmall">
+            <img alt="GitLab" src="${imageData}" class="imageSmall">
             <h3 id="dialogUser">${user}?</h3>
           </div>
         </div>
@@ -102,11 +105,15 @@ function queryIcon(issuer) {
         <h3>Are you on ${issuer}'s 2FA Setup Page?</h3>
       </div>
       <div>
-        <p>Go there or the Home page and click <strong>Yes</strong></p>
+        <p>To add the icon: </p>
+        <ol>
+          <li>Go to <span style="text-transform: capitalize;">${issuer}'s</span> 2FA Setup or Homepage</li>
+          <li>Click <strong>I'm There</strong></li>
+        </ol>
       </div>
       <div class="dialogOptions">
-        <button id="yes">Yes</button>
-        <button class="cancel" formmethod="dialog" autofocus>No</button>
+        <button id="yes">I'm There</button>
+        <button class="cancel" formmethod="dialog" autofocus>Cancel</button>
       </div>
     </form>
     `
@@ -154,7 +161,7 @@ function displayToken (issuer, userGUID, accountDetails, issuerSettings) {
     var totp = new jsOTP.totp();
     let key = accountDetails.secret
     let user = accountDetails.username
-
+    let visualIssuer = issuer.charAt(0).toUpperCase() + issuer.slice(1);
     // Initial element creation
   
 
@@ -177,7 +184,7 @@ function displayToken (issuer, userGUID, accountDetails, issuerSettings) {
       <div class="tokenIssuer">
           ${icon}
       </div>
-      <div class="tokenUser">${issuer} | ${user}</div>
+      <div class="tokenUser">${visualIssuer} | ${user}</div>
       ` 
       token.querySelector(".letterIcon").addEventListener("click", (e)=> {queryIcon(issuer)})
     }
@@ -295,7 +302,7 @@ function displayToken (issuer, userGUID, accountDetails, issuerSettings) {
     token.appendChild(deleteTokenEl)
     
     deleteTokenEl.addEventListener("click", async ()=>{
-      deleteToken(user, imageData).then((deletionEvent) => {
+      deleteToken(user, imageData, visualIssuer).then((deletionEvent) => {
 
         if (deletionEvent == "remove") {
 
@@ -841,12 +848,13 @@ const manualEntryPoint = {
         chrome.storage.local.get(["external"], storage => {
           settings = storage.external[tokenData.issuer]
           // need to figure out/establish how caching is properly going to work.. 
+          // can't move this down below else: storage.get is asynchronous, runs after this whole block is done
+          displayToken(tokenData.issuer, e.userGUID, {username: tokenData.user, secret: tokenData.secret}, settings)
+          Array.from(document.querySelectorAll(".tokenField")).at(-1).scrollIntoView({behavior:"smooth"})
           if (settings) {
-            displayToken(tokenData.issuer, e.userGUID, {username: tokenData.user, secret: tokenData.secret}, settings)
-            Array.from(document.querySelectorAll(".tokenField")).at(-1).scrollIntoView({behavior:"smooth"})
             chrome.storage.sync.set({[tokenData.issuer]: settings});
-          }
-        })
+          } 
+        }) // once fixed I can use this type of process for totp format import
       } 
       else { // okay. for scroll and for future proof - displaytoken will be a class or something, with a .scrollTo method and a .updateDetails method with user, secret, image params.
         displayToken(tokenData.issuer, e.userGUID, {username: tokenData.user, secret: tokenData.secret}, settings) // that way .update image can be called after displayToken.

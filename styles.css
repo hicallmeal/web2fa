@@ -8,7 +8,6 @@ html {
   padding: 0;
 }
 
-
 body {
   overflow:hidden;
   height:450px;
@@ -263,6 +262,7 @@ dialog form {
   flex: auto;
 }
 
+
 dialog h3 {
   font-size: 15px;
   font-weight: 600;
@@ -277,15 +277,20 @@ dialog h3 {
   max-width: 74%;
   display: inline-block;
   white-space: nowrap;
+  text-transform: none;
 }
 
 dialog p {
   margin-top: 10px;
 }
 
-dialog ul {
+dialog ol, dialog ul {
   padding-inline-start: 15px;
   margin-top: 13px;
+}
+
+li::marker {
+  font-weight: 500;
 }
 
 dialog li {
@@ -308,12 +313,13 @@ dialog button {
   cursor: pointer;
   color: var(--code-blue);
   padding: 5px;
-  /* outline-color: var(--code-blue); */
-  outline:none;
-  width: 36px;
+  outline-color: var(--code-blue);
+  /* outline:none; */
+  width: 90px;   /* 36px for 2 buttons */
+
 }
 
-.proceed {
+dialog button.proceed {
   color: #e63131; /*  brighter - #e63131 */
 }
 
@@ -388,14 +394,18 @@ dialog button {
 }
 
 .imageSmall {
-  width: 17px;
+  width: 18px;
   display: inline-block;
   margin-left: 6px;
 }
 
 img[src=''] {
-  visibility: hidden;
-  margin-left: -2px;
+  display: none;
+  /* margin-left: -2px; */
+}
+
+img[src=''] ~ #dialogUser {
+  padding-right: 0;
 }
 
 
